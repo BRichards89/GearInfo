@@ -1,6 +1,6 @@
 _addon.name = 'GearInfo'
-_addon.author = 'Sebyg666'
-_addon.version = '1.7.2.10'
+_addon.author = 'Sebyg666, Modified by Malasia'
+_addon.version = '1.7.2.11'
 _addon.commands = {'gi','gearinfo'}
 
 
@@ -42,7 +42,8 @@ require 'Packet_parsing'
 require 'Image_processing'
 
 windower.register_event('load', function()
-	if windower.ffxi.get_player() then
+	success, player = pcall(windower.ffxi.get_player)
+	if success then
 		options_load()
 		--text_box:show()
 		
@@ -196,6 +197,8 @@ windower.register_event('addon command', function(command, ...)
 			settings.player.show_STP = false
 			settings.player.show_DW_Stuff = false
 			settings.player.show_MA_Stuff = false
+			settings.player.show_mult_atk_stuff = false
+			settings.player.show_gs = false
 			log('All display settings set to false to hide display.')
 			settings:save('all')
 		elseif command:lower() == 'update' then
@@ -341,8 +344,22 @@ windower.register_event('addon command', function(command, ...)
 				elseif settings.player.show_dt_Stuff then
 					settings.player.show_dt_Stuff = false
 				end
-				-- log('Currently dissabled, in testing.')
 				log('Show Defence = '..tostring(settings.player.show_dt_Stuff))
+			elseif args[1]:lower() == 'mult_atk' then
+				if settings.player.show_mult_atk_stuff == false then
+					settings.player.show_mult_atk_stuff = true
+				elseif settings.player.show_mult_atk_stuff then
+					settings.player.show_mult_atk_stuff = false
+				end
+				log('Show multi_attacks = '..tostring(settings.player.show_mult_atk_stuff))
+			elseif args[1]:lower() == 'showgs' then
+				if settings.player.show_gs == false then
+					settings.player.show_gs = true
+				elseif settings.player.show_gs then
+					settings.player.show_gs = false
+				end
+				log('Show gear swap status = '..tostring(settings.player.show_gs))
+				-- log('Currently dissabled, in testing.')
 			elseif args[1]:lower() == 'cor' then
 				if settings.player.show_COR_messages == false then
 					settings.player.show_COR_messages = true
@@ -408,7 +425,7 @@ windower.register_event('addon command', function(command, ...)
 				error('the folder '..args[1]:lower()..' does not exist.')
 			end
 		elseif command:lower() == 'test' then
-			
+
 			-- table.vprint(player['merits']['aggressive_aim'])
 			-- for skill_name, value in pairs(player_base_skills) do
 				-- if skill_name:contains('eva') then
@@ -627,7 +644,7 @@ function check_equipped()
 			local item_has_augment = Extdata.decode(v)
 			local no_match = true
 			local temp_item = new_gear_table[k]
-			
+
 			for x,y in pairs(full_gear_table_from_file) do
 				if v.id == y.id then
 					if type(item_has_augment.augments) == 'table' and table.length(item_has_augment.augments) > 0 then
@@ -771,7 +788,7 @@ function update()
 			if sections.block[3] then sections.block[3]:delete() end
 			if sections.block[4] then sections.block[4]:delete() end
 		end
-		
+
 		-------------------------------------------------------------- DT stuff ---------------------------------------------------------------
 		
 		if settings.player.show_dt_Stuff == true then
@@ -1065,15 +1082,32 @@ function update()
 		end		
 
 		-------------------------------------------------------------- update GS ---------------------------------------------------------------
-		if not sections.block[29] then sections.block[29] = ImageBlock.New(30,'block','grey', 'UGS', '') end
-		if settings.player.update_gs == true then
-			windower.text.set_text(sections.block[29].text[2].name, tostring(settings.player.update_gs))
-			windower.text.set_color(sections.block[29].text[2].name, 255, 255, 255, 255)
-		else
-			windower.text.set_text(sections.block[29].text[2].name, tostring(settings.player.update_gs))
-			windower.text.set_color(sections.block[29].text[2].name, 255, 255, 0, 0)
+		if settings.player.show_gs then
+			if not sections.block[29] then sections.block[29] = ImageBlock.New(30,'block','grey', 'UGS', '') end
+			if settings.player.update_gs == true then
+				windower.text.set_text(sections.block[29].text[2].name, tostring(settings.player.update_gs))
+				windower.text.set_color(sections.block[29].text[2].name, 255, 255, 255, 255)
+			else
+				windower.text.set_text(sections.block[29].text[2].name, tostring(settings.player.update_gs))
+				windower.text.set_color(sections.block[29].text[2].name, 255, 255, 0, 0)
+			end
 		end
-			
+		local block_index = 30;
+		local total_multi_att = get_player_multi_att(Gear_info)
+		if settings.player.show_mult_atk_stuff == true then
+			if not sections.block[block_index] then sections.block[block_index] = ImageBlock.New(block_index+1,'block','grey','DATK','') end
+			windower.text.set_text(sections.block[block_index].text[2].name, tostring(total_multi_att['DATK'] ))
+			windower.text.set_color(sections.block[block_index].text[2].name, 255, 255, 255, 255)
+			block_index = block_index + 1
+			if not sections.block[block_index] then sections.block[block_index] = ImageBlock.New(block_index+1,'block','grey','TATK','') end
+			windower.text.set_text(sections.block[block_index].text[2].name, tostring(total_multi_att['TATK'] ))
+			-- windower.text.set_color(sections.block[31].text[2].name, 255, 255, 255, 255)
+			block_index = block_index + 1
+			if not sections.block[block_index] then sections.block[block_index] = ImageBlock.New(block_index+1,'block','grey','QATK','') end
+			windower.text.set_text(sections.block[block_index].text[2].name, tostring(total_multi_att['QATK'] ))
+			windower.text.set_color(sections.block[block_index].text[2].name, 255, 255, 255, 255)
+		end
+	
 		-- if old_inform ~= inform then
 			-- --text_box:update(inform)
 			-- old_inform = inform

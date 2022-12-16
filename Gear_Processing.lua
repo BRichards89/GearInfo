@@ -36,7 +36,7 @@ function find_all_values(item)
 		end
 		
 		if augs then edited_item.augments = augs end
-		
+
 		for k, v in pairs(descript_table) do
 			edited_item[k] = v
 		end
@@ -107,13 +107,24 @@ function find_all_values(item)
 end
 
 function check_for_augments(item)
-	
 	local augs = Extdata.decode(item).augments
 	local item_t = res.items:with('id', item.id)
 	local temp = T{}
+	-- Initial section for some of my augments. TODO: Break this into a seperate file
+	if item_t["en"] == "Sailfi Belt +1" then
+		temp["DATK"] = 5
+		temp["STR"] = 14
+	elseif item_t["en"] == "Seeth. Bomblet +1" then
+		temp["STR"] = 8
+		temp["Haste"] = 4
+	elseif item_t["en"] == "War. Beads +1" then
+		temp["STR"] = 12
+		temp["DEX"] = 12
+		temp["DATK"] = 6
+	end
 	if augs then
 		for k,v in pairs(augs) do
-			
+
 			if v:contains('Pet:') or v:contains('Wyvern:') or v:contains('Avatar:') then
 			
 			else
@@ -136,6 +147,8 @@ end
 function desypher_description(discription_string, item_t)
 	
 	-- string that need modifying to stop clashing
+	discription_string = string.gsub(discription_string, 'Enhances \"Double Attack\" effect', 'DATK+5%') 
+	discription_string = string.gsub(discription_string, '\"Dbl.Atk.\"', 'DATK') 
 	discription_string = string.gsub(discription_string, 'Ranged Accuracy%s?', 'Ranged_accuracy') 
 	discription_string = string.gsub(discription_string, 'Rng.%s?Acc.%s?', 'Ranged_accuracy')  
 	discription_string = string.gsub(discription_string, 'Ranged Attack%s?', 'Ranged_attack') 
@@ -169,7 +182,12 @@ function desypher_description(discription_string, item_t)
 	discription_string = string.gsub(discription_string,  "Great Axe skill",  "Great axe skill")
 	discription_string = string.gsub(discription_string,  "Great Katana skill",  "Great katana skill")
 	discription_string = string.gsub(discription_string,  "Great Sword skill",  "Great sword skill")
-	
+	discription_string = string.gsub(discription_string,  "Haste",  "Haste")
+	discription_string = string.gsub(discription_string,  '\"Double Attack\"',  "DATK")
+	discription_string = string.gsub(discription_string,  '\"Triple Attack\"',  "TATK")
+	discription_string = string.gsub(discription_string,  '\"Quad Attack\"',  "QATK")
+	discription_string = string.gsub(discription_string,  "STR",  "STR")
+
 	local str_table = ''
 	
 	if discription_string:contains('Pet:') then
@@ -199,7 +217,7 @@ function desypher_description(discription_string, item_t)
 								'Haste','\"Slow\"','\"Store TP\"','\"Dual Wield\"','\"Fast Cast\"','\"Martial Arts\"',
 								'DMG','PDT','MDT','BDT','D_T','MDT_2','PDT_2',
 								'Evasion',
-								'Critical hit damage' ,'Critical hit rate', 
+								'Critical hit damage' ,'Critical hit rate',"DATK", "TATK", "QATK", 
 								"Hand%-to%-Hand skill", "Dagger skill", "Sword skill", "Great sword skill", "Axe skill", "Great axe skill",  "Scythe skill", "Polearm skill", 
 								"Katana skill", "Great katana skill", "Club skill",  "Staff skill", "Archery skill", "Marksmanship skill" , "Throwing skill","Guarding skill","Evasion skill","Shield skill","Parrying skill",
 								"Divine Magic skill","Healing Magic skill","Enhancing Magic skill","Enfeebling Magic skill","Elemental Magic skill","Dark Magic skill","Summoning Magic skill","Ninjutsu skill","Singing skill",
@@ -231,7 +249,11 @@ function desypher_description(discription_string, item_t)
 		['WS_dex'] = 'Weapon skill DEX',
 		['\"Quadruple Attack\"'] = 'Quadruple Attack',
 		['\"Triple Attack\"'] = 'Triple Attack',
-		['\"Double Attack\"'] = 'Double Attack',
+		['\"Double Attack\"'] = 'DATK',
+		['Double Attack'] = 'DATK',
+		['DATK'] = 'DATK',
+		['TATK'] = 'TATK',
+		['QATK'] = 'QATK',
 	}
 	
 	for k, v in pairs(valid_strings) do
@@ -268,7 +290,7 @@ function get_equip_stats(equipment_table)
 									["Katana skill"]=0, ["Great Katana skill"]=0,["Club skill"]=0,["Staff skill"]=0,["Archery skill"]=0,["Marksmanship skill"]=0,["Throwing skill"]=0,['Combat skills']=0,
 									
 									['Evasion skill'] = 0,
-									
+									['DATK'] = 0, ['TATK'] = 0, ['QATK'] = 0,
 									['main'] = {['skill'] = '', value = 0}, ['sub'] = {['skill'] = '', value = 0}, ['range'] = {['skill'] = '', value = 0}, ['ammo'] = {['skill'] = '', value = 0},
 								}
 								
@@ -276,7 +298,7 @@ function get_equip_stats(equipment_table)
 	local ranged_skills = L{"Archery skill", "Marksmanship skill", "Throwing skill"}
 							
 	local set_bonus = {}
-	
+
 	if type(equipment_table) ~= 'table' or equipment_table == nil then
 		error('get_equip_stats() function went wrong')
 		return stat_table
@@ -308,7 +330,13 @@ function get_equip_stats(equipment_table)
 							end
 						end
 					else
-						if key == 'Haste' then
+						if key == 'Double Attack' then
+							stat_table['DATK'] = stat_table["DATK"].value + value
+						elseif key == 'Triple Attack' then
+							stat_table['TATK'] = stat_table["TATK"].value + value
+						elseif key == 'Quad Attack' then
+								stat_table['QATK'] = stat_table["QATK"].value + value
+						elseif key == 'Haste' then
 							stat_table['Haste'] = stat_table['Haste'] + math.floor(value / 100 * 1024)
 						elseif key == 'Slow' then
 							stat_table['Haste'] = stat_table['Haste'] - math.floor(value / 100 * 1024)
@@ -436,7 +464,16 @@ function get_player_acc(stat_table)
 	--log(ammo_acc_skill.. ' ' .. item_racc .. ' ' .. get_player_acc_from_job() .. ' ' .. ammo.value .. ' ' .. skill_from_gear_ammo .. ' ' ..item_agi .. ' ' .. player_agi )	
 	return Total_acc
 end
-
+function get_player_multi_att(stat_table)
+	local total_multi_att = {DATK = 0, TATK = 0, QATK = 0}
+	total_multi_att['DATK'] = stat_table['DATK']
+	if player.main_job:upper() == "WAR" then
+		total_multi_att['DATK'] = total_multi_att['DATK'] + 28 + 5
+	end
+	total_multi_att['TATK'] = stat_table['TATK']
+	total_multi_att['QATK'] = stat_table['QATK']
+	return total_multi_att
+end
 function get_player_att(stat_table)
 	
 	local stat_table = stat_table
