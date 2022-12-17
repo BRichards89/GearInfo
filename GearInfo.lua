@@ -1091,8 +1091,10 @@ function update()
 				windower.text.set_text(sections.block[29].text[2].name, tostring(settings.player.update_gs))
 				windower.text.set_color(sections.block[29].text[2].name, 255, 255, 0, 0)
 			end
+		else
+			if sections.block[29] then sections.block[29]:delete() end
 		end
-		local block_index = 30;
+		local block_index = 30
 		local total_multi_att = get_player_multi_att(Gear_info)
 		if settings.player.show_mult_atk_stuff == true then
 			if not sections.block[block_index] then sections.block[block_index] = ImageBlock.New(block_index+1,'block','grey','DATK','') end
@@ -1106,6 +1108,13 @@ function update()
 			if not sections.block[block_index] then sections.block[block_index] = ImageBlock.New(block_index+1,'block','grey','QATK','') end
 			windower.text.set_text(sections.block[block_index].text[2].name, tostring(total_multi_att['QATK'] ))
 			windower.text.set_color(sections.block[block_index].text[2].name, 255, 255, 255, 255)
+		else
+			block_index = 30
+			if sections.block[block_index] then sections.block[block_index]:delete() end
+			block_index = block_index + 1
+			if sections.block[block_index] then sections.block[block_index]:delete() end
+			block_index = block_index + 1
+			if sections.block[block_index] then sections.block[block_index]:delete() end
 		end
 	
 		-- if old_inform ~= inform then
