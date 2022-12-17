@@ -106,7 +106,7 @@ function determine_stp()
 			sub_job_tp = 0
 		elseif player.sub_job == 'SAM' and player.sub_job_level < 30 and  player.sub_job_level > 9 then 
 			sub_job_tp = 10
-		elseif player.sub_job == 'SAM' and player.sub_job_level < 50 and  player.sub_job_level > 31 then 
+		elseif player.sub_job == 'SAM' and player.sub_job_level < 60 and  player.sub_job_level > 31 then 
 			sub_job_tp = 15
 			--log('sub_job_tp = 15')
 		end

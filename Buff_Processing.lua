@@ -47,6 +47,11 @@ function check_buffs()
 		if buff.id == 68 then -- Warcry
 			if this_buff.value then
 				this_buff["Attack perc"] = this_buff.value
+				if player.main_job:upper() == 'WAR' then
+					if player['job_points'][player['main_job']:lower()]['jp_spent'] == 2100 then
+						this_buff["Attack"] = 60
+					end
+				end
 				--log('buff: '..this_buff.id..' effect: '..this_buff.effect..' value: '..this_buff.value)
 			end
 		end
@@ -65,6 +70,9 @@ function check_buffs()
 					this_buff["Attack perc"] = 336
 				elseif player.main_job_level > 89 then
 					this_buff["Attack perc"] = 356
+					if player['job_points'][player['main_job']:lower()]['jp_spent'] == 2100 then
+						this_buff["Attack"] = 40
+					end
 				end
 			else
 				this_buff["Attack perc"] = 256
@@ -121,6 +129,11 @@ function check_buffs()
 		end
 		if buff.id == 58 then -- Aggressor
 			this_buff['Accuracy'] = 25
+			if player.main_job:upper() == 'WAR' then
+				if player['job_points'][player['main_job']:lower()]['jp_spent'] == 2100 then
+					this_buff["Accuracy"] = this_buff["Accuracy"] + 20
+				end
+			end
 			this_buff['Evasion'] = -25
 			if player.main_job:lower() == 'war' then
 				this_buff['Ranged Accuracy'] = player['merits']['aggressive_aim'] * 4
