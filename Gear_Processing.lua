@@ -1,7 +1,25 @@
 
+function edit_item(item_stat_table, edited_item)
+	if item_stat_table then
+		local temp_stats = T{}
+		for k, v in pairs(item_stat_table) do
+			temp_stats[k] = v
+		end
+		
+		for k, v in pairs(temp_stats) do
+			if edited_item[k] then
+				edited_item[k] = edited_item[k] + v
+			else
+				edited_item[k] = v
+			end
+		end
+	end
+	return edited_item
+end
 function find_all_values(item)
 	-- notice(item.id)
 	local temp = check_for_augments(item)
+	local special_items = check_for_special_gear(item)
 	local augs = Extdata.decode(item).augments
 	
 	local item = res.items:with('id', item.id)
@@ -85,25 +103,61 @@ function find_all_values(item)
 				end
 			end
 		end
+		edited_item = edit_item(temp, edited_item)
+		edited_item = edit_item(special_items, edited_item)
 		
-		if temp then
-			local temp_augments = T{}
-			for k, v in pairs(temp) do
-				temp_augments[k] = v
-			end
-			
-			for k, v in pairs(temp_augments) do
-				if edited_item[k] then
-					edited_item[k] = edited_item[k] + v
-				else
-					edited_item[k] = v
-				end
-			end
-		end
-
 		return edited_item
 	end
 		
+end
+
+function check_for_special_gear(item)
+	-- Items not supported by extdata go here
+	-- Also, items with special "enhances" go here
+	local item_mods = T{}
+	local item_t = res.items:with('id', item.id)
+	if item_t["en"] == "Sailfi Belt +1" then
+		item_mods["DATK"] = 5
+		item_mods["STR"] = 14
+	elseif item_t["en"] == "Seeth. Bomblet +1" then
+		item_mods["STR"] = 8
+		item_mods["Haste"] = 4
+	elseif item_t["en"] == "War. Beads +1" then
+		item_mods["STR"] = 12
+		item_mods["DEX"] = 12
+		item_mods["DATK"] = 6
+	elseif item_t["en"] == "Abyssal Beads +1" then
+		item_mods["STR"] = 20
+		item_mods["Store TP"] = 6
+		item_mods["PDL"] = 8
+	elseif item_t["en"] == "Comm. Charm +1" then
+		item_mods["STR"] = 12
+		item_mods["AGI"] = 12
+		item_mods["Magic Dmg"] = 19
+		item_mods["M.ATK.Bns"] = 5
+	elseif item_t["en"] == "Suppanomimi" then
+		item_mods["Dual Wield"] = 5
+	elseif item_t["en"] == "Brutal Earring" then
+		item_mods["DATK"] = 5
+	elseif item_t["en"] == "Nyame gauntlets" then
+		item_mods["Attack"] = 14
+		item_mods["Ranged_attack"] = 14
+		item_mods["WSD"] = 4
+	elseif item_t["en"] == "Nyame helm" then
+		item_mods["Attack"] = 12
+		item_mods["Ranged_attack"] = 12
+		item_mods["WSD"] = 4
+	elseif item_t["en"] == "Nyame Mail" then
+		item_mods["Attack"] = 15
+		item_mods["Ranged_attack"] = 15
+		item_mods["WSD"] = 5
+	elseif item_t["en"] == "Nyame Flanchard" then
+		item_mods["Attack"] = 15
+		item_mods["Ranged_attack"] = 15
+		item_mods["WSD"] = 5
+	end
+	if not next(item_mods) then item_mods = nil end
+	return item_mods
 end
 
 function check_for_augments(item)
@@ -111,17 +165,7 @@ function check_for_augments(item)
 	local item_t = res.items:with('id', item.id)
 	local temp = T{}
 	-- Initial section for some of my augments. TODO: Break this into a seperate file
-	if item_t["en"] == "Sailfi Belt +1" then
-		temp["DATK"] = 5
-		temp["STR"] = 14
-	elseif item_t["en"] == "Seeth. Bomblet +1" then
-		temp["STR"] = 8
-		temp["Haste"] = 4
-	elseif item_t["en"] == "War. Beads +1" then
-		temp["STR"] = 12
-		temp["DEX"] = 12
-		temp["DATK"] = 6
-	end
+	
 	if augs then
 		for k,v in pairs(augs) do
 
@@ -137,17 +181,16 @@ function check_for_augments(item)
 				end
 			end
 		end
-		return temp
-	else
-		return nil
 	end
+	if not next(temp) then temp = nil end
+	return temp
 	
 end
 
 function desypher_description(discription_string, item_t)
 	
 	-- string that need modifying to stop clashing
-	discription_string = string.gsub(discription_string, 'Enhances \"Double Attack\" effect', 'DATK+5%') 
+	discription_string = string.gsub(discription_string, 'Weapon Skill Accuracy', 'WSACC') 
 	discription_string = string.gsub(discription_string, '\"Dbl.Atk.\"', 'DATK') 
 	discription_string = string.gsub(discription_string, 'Ranged Accuracy%s?', 'Ranged_accuracy') 
 	discription_string = string.gsub(discription_string, 'Rng.%s?Acc.%s?', 'Ranged_accuracy')  
@@ -456,6 +499,11 @@ function get_player_acc(stat_table)
 		Total_acc.ammo = 0
 	end
 	
+	if player.main_job:upper() == "COR" then
+		if player['job_points'][player['main_job']:lower()]['jp_spent'] == 2100 then
+			Total_acc.range = Total_acc.range + 20
+		end
+	end
 	--notice('Main Acc = '.. Total_acc.main .. ' | Off hand Acc = '.. Total_acc.sub .. ' | Ranged Acc = '.. Total_acc.range .. ' | ammo Acc = '.. Total_acc.ammo)
 	--log('Dex = '.. stat_table['DEX'] .. ' | Main skill  = '.. stat_table['main'].value .. ' | Sub skill = '.. stat_table['sub'].value .. ' | job acc = ' ..get_player_acc_from_job() .. ' | gear acc = ' .. stat_table['Accuracy'])
 	--log('Agi = '.. stat_table['AGI'] .. ' | Range skill  = '.. stat_table['range'].value .. ' | Ammo skill = '.. stat_table['ammo'].value .. ' | job acc = ' ..get_player_acc_from_job().. ' | gear r.acc = ' .. stat_table['Ranged Accuracy'])
